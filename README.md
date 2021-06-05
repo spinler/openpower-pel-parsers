@@ -37,6 +37,10 @@ Fortunately, as with all python, we can create submodules for each component if
 needed. So the parsing code does not need to be contained with the SRC module.
 Only the top level `parseSRCToJson` function is required.
 
+**Important Note:** A wrapper has been created for the `BMC` subsystem SRC
+module. This wrapper mimics how the modules work for user data sections. See
+[modules/srcparsers/osrc/osrc.py](modules/srcparsers/osrc/osrc.py) for details.
+
 ## User data parsers
 
 Each subsystem requiring user data parsers will create a module for each
