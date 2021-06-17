@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from pel.hexdump import hexdump
 from pel.datastream import DataStream
+from pel.hwdiags.parserdata import ParserData
 
 
 def _parse_signature_list(version: int, stream: DataStream) -> OrderedDict:
@@ -12,7 +13,21 @@ def _parse_signature_list(version: int, stream: DataStream) -> OrderedDict:
 
     out = OrderedDict()
 
-    out["Warning"] = "User data parser TBD"
+    parser = ParserData()
+
+    # The first 4 bytes contains the number of signatures in this data.
+    sig_count = stream.get_int(4)
+
+    # Iterate each signature.
+    out["Signature List"] = []
+    for i in range(0, sig_count):
+        # Extact the three words of the signature.
+        a = stream.get_mem(4).hex()
+        b = stream.get_mem(4).hex()
+        c = stream.get_mem(4).hex()
+
+        # Get the signature data.
+        out["Signature List"].append(parser.get_signature(a, b, c))
 
     return out
 
