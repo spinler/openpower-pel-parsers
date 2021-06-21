@@ -177,3 +177,34 @@ class ParserData:
         return out
 
 
+    def get_reg_data(self, model_ec: str, reg_id: str,
+                     reg_inst: int) -> (str, str):
+        """
+        Returns the register name and address for the given register data.
+        """
+        # Check parameters.
+        self._check_hex(model_ec, 4)
+        self._check_hex(reg_id,   3)
+        self._check_int(reg_inst, 1)
+
+        # All keys are strings. Hex keys are lowercase.
+        model_ec = model_ec.lower()
+        reg_id   = reg_id.lower()
+        reg_inst = str(reg_inst)
+
+        # Extract register name.
+        try:
+            reg_name = self._data[model_ec]["registers"][reg_id][0]
+        except KeyError:
+            reg_name = "id:%s inst:%s" % (reg_id.upper(), reg_inst)
+
+        # Extract register address.
+        try:
+            reg_addr = self._data[model_ec]["registers"][reg_id][1][reg_inst]
+            reg_addr = int(reg_addr, base=16)
+        except KeyError:
+            reg_addr = 0
+
+        return reg_name, "0x%08X" % reg_addr
+
+
