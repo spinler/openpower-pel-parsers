@@ -6,14 +6,14 @@ from pel.datastream import DataStream
 from pel.hwdiags.parserdata import ParserData
 
 
-def _parse_signature_list(version: int, stream: DataStream) -> OrderedDict:
+def _parse_signature_list(version: int, data: memoryview) -> str:
     """
     Parser for the signature list.
     """
 
-    out = OrderedDict()
-
+    stream = DataStream(data, byte_order='big', is_signed=False)
     parser = ParserData()
+    out    = OrderedDict()
 
     # The first 4 bytes contains the number of signatures in this data.
     sig_count = stream.get_int(4)
@@ -29,17 +29,18 @@ def _parse_signature_list(version: int, stream: DataStream) -> OrderedDict:
         # Get the signature data.
         out["Signature List"].append(parser.get_signature(a, b, c))
 
-    return out
+    # Convert to JSON format and dump to a string.
+    return json.dumps(out)
 
 
-def _parse_register_dump(version: int, stream: DataStream) -> OrderedDict:
+def _parse_register_dump(version: int, data: memoryview) -> str:
     """
     Parser for the register dump.
     """
 
-    out = OrderedDict()
-
+    stream = DataStream(data, byte_order='big', is_signed=False)
     parser = ParserData()
+    out    = OrderedDict()
 
     # The register dump will just be a list of strings where each line is either
     # a chip description or the register data associated with the chip.
@@ -98,31 +99,30 @@ def _parse_register_dump(version: int, stream: DataStream) -> OrderedDict:
 
     out["Register Dump"] = dump
 
-    return out
+    # Convert to JSON format and dump to a string.
+    return json.dumps(out)
 
 
-def _parse_guard_list(version: int, stream: DataStream) -> OrderedDict:
+def _parse_guard_list(version: int, data: memoryview) -> str:
     """
     Parser for the guard list.
     """
 
     out = OrderedDict()
 
-    out["Warning"] = "User data parser TBD"
+    out["Warning"]  = "User data parser TBD"
+    out["Hex Dump"] = hexdump(data)
 
-    return out
+    # Convert to JSON format and dump to a string.
+    return json.dumps(out)
 
 
-def _parse_default(version: int, stream: DataStream) -> OrderedDict:
+def _parse_default(version: int, data: memoryview) -> str:
     """
     Default parser for user data sections that are not currently supported.
     """
 
-    out = OrderedDict()
-
-    out["Warning"] = "Unsupported user data type"
-
-    return out
+    return json.dumps(None)
 
 
 def parseUDToJson(subtype: int, version: int, data: memoryview) -> str:
@@ -138,14 +138,7 @@ def parseUDToJson(subtype: int, version: int, data: memoryview) -> str:
     }
     subtype_func = parsers.get(subtype, _parse_default)
 
-    # Get the parsed output of this data.
-    stream = DataStream(data, byte_order='big', is_signed=False)
-    out = subtype_func(version, stream)
+    # Return the parsed output of this data.
+    return subtype_func(version, data)
 
-    # If any warnings were added to the data, include the hex dump.
-    if "Warning" in out:
-        out["Hex Dump"] = hexdump(data)
-
-    # Convert to JSON format and dump to a string.
-    return json.dumps(out)
 
