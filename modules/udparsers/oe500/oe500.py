@@ -103,18 +103,27 @@ def _parse_register_dump(version: int, data: memoryview) -> str:
     return json.dumps(out)
 
 
-def _parse_guard_list(version: int, data: memoryview) -> str:
+def _parse_callout_ffdc(version: int, data: memoryview) -> str:
     """
-    Parser for the guard list.
+    Parser for callout list FFDC.
     """
 
-    out = OrderedDict()
+    # The data in this section is simply a string representation of JSON data.
+    # When the JSON data is written to the section, it will include a null
+    # character at the end because it is a string. Before converting the
+    # memoryview of the data to a string the null character must be removed.
+    # Otherwise, the json.loads() function will throw an exception due to the
+    # unexpected character at the end.
 
-    out["Warning"]  = "User data parser TBD"
-    out["Hex Dump"] = hexdump(data)
+    # Convert the data into a string.
+    s = data.tobytes().rstrip(b'\0').decode('utf8')
+
+    # It seems odd to convert the JSON string to python structures just to turn
+    # around convert it back to a string. However, we still need to do this so
+    # that the output looks nice. Otherwise, the data will all be in one line.
 
     # Convert to JSON format and dump to a string.
-    return json.dumps(out)
+    return json.dumps( { "Callout List FFDC": json.loads(s) } )
 
 
 def _parse_default(version: int, data: memoryview) -> str:
@@ -134,7 +143,7 @@ def parseUDToJson(subtype: int, version: int, data: memoryview) -> str:
     parsers = {
         1: _parse_signature_list,
         2: _parse_register_dump,
-        3: _parse_guard_list,
+        3: _parse_callout_ffdc,
     }
     subtype_func = parsers.get(subtype, _parse_default)
 
