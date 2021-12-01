@@ -126,6 +126,29 @@ def _parse_callout_ffdc(version: int, data: memoryview) -> str:
     return json.dumps( { "Callout List FFDC": json.loads(s) } )
 
 
+def _parse_hb_scratch_regs(version: int, data: memoryview) -> str:
+    """
+    Parser for the Hostboot scratch registers.
+    """
+
+    stream = DataStream(data, byte_order='big', is_signed=False)
+
+    # Extract the hex string values of the data.
+    cfamAddr  = '0x' + stream.get_mem(4).hex()
+    cfamValue = '0x' + stream.get_mem(4).hex()
+    scomAddr  = '0x' + stream.get_mem(8).hex()
+    scomValue = '0x' + stream.get_mem(8).hex()
+
+    # Just make a simple list for now.
+    out = {
+        cfamAddr: cfamValue,
+        scomAddr: scomValue
+    }
+
+    # Convert to JSON format and dump to a string.
+    return json.dumps({"Hostboot Scratch Registers": out})
+
+
 def _parse_default(version: int, data: memoryview) -> str:
     """
     Default parser for user data sections that are not currently supported.
@@ -144,6 +167,7 @@ def parseUDToJson(subtype: int, version: int, data: memoryview) -> str:
         1: _parse_signature_list,
         2: _parse_register_dump,
         3: _parse_callout_ffdc,
+        4: _parse_hb_scratch_regs,
     }
     subtype_func = parsers.get(subtype, _parse_default)
 
