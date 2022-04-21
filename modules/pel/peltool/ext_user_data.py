@@ -1,17 +1,18 @@
 from pel.datastream import DataStream
 from collections import OrderedDict
-from pel.peltool.pel_values import *
+from pel.peltool.parse_user_data import ParseUserData
 import json
 
 
 class ExtUserData:
     """
-    This represents the Extended User Header section in a PEL.
-    It is a required section. It contains code versions, an MTMS
-    subsection, and a string called a symptom ID.
+    This represents the Extended User Data section in a PEL.  It is free form
+    data that the creator knows the contents of.  The component ID, version, and
+    sub-type fields in the section header are used to identify the format.
 
-    The Section base class handles the section header structure that every
-    PEL section has at offset zero.
+    This section is used for one subsystem to add FFDC data to a PEL created
+    by another subsystem.  It is basically the same as a UserData section,
+    except it has the creator ID of the section creator stored in the section.
     """
 
     def __init__(self, stream: DataStream, sectionID: int, sectionLen: int,
@@ -22,16 +23,26 @@ class ExtUserData:
         self.subType = subType
         self.componentID = componentID
         dataLength = sectionLen - 4 - 8
-        self.creatorID = stream.get_int(1)
+        self.creatorID = chr(stream.get_int(1))
         self.reserved1B = stream.get_int(1)
         self.reserved2B = stream.get_int(2)
-        self.data = bytes.decode(stream.get_mem(dataLength)).strip()
+        self.data = stream.get_mem(dataLength)
 
-    def toJSON(self) -> str:
+    def toJSON(self) -> OrderedDict:
         out = OrderedDict()
         out["Section Version"] = self.versionID
         out["Sub-section type"] = self.subType
         out["Created by"] = "0x{:02X}".format(self.componentID)
-        out.update(json.loads(self.data))
+
+        parser = ParseUserData(self.creatorID, self.componentID, self.subType,
+                               self.versionID, self.data)
+
+        value = parser.parse()
+
+        j = json.loads(value)
+        if not isinstance(j, dict):
+            out['Data'] = j
+        else:
+            out.update(j)
 
         return out

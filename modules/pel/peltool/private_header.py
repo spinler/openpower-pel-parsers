@@ -47,7 +47,7 @@ class PrivateHeader:
         self.createTime = ""
         self.committeTime = ""
 
-    def toJSON(self) -> str:
+    def toJSON(self) -> OrderedDict:
         self.createTime = getTimestamp(self.stream)
         self.committeTime = getTimestamp(self.stream)
         self.creatorID = bytes.decode(self.stream.get_mem(1))
@@ -65,7 +65,7 @@ class PrivateHeader:
         out["Created by"] = "0x{:02X}".format(self.componentID)
         out["Created at"] = self.createTime
         out["Committed at"] = self.committeTime
-        out["Creator Subsystem"] = creatorIDs[self.creatorID]
+        out["Creator Subsystem"] = creatorIDs.get(self.creatorID, 'Unknown')
         out["CSSVER"] = self.creatorVersion
         out["Platform Log Id"] = self.pLID
         out["Entry Id"] = self.lEID

@@ -3,8 +3,10 @@ from collections import OrderedDict
 from enum import Enum, unique
 from pel.peltool.pel_types import SRCType
 from pel.peltool.registry import Registry
-from pel.peltool.pel_values import failingComponentType, calloutPriorityValues, procedureDesc
+from pel.peltool.pel_values import failingComponentType, \
+    calloutPriorityValues, procedureDesc
 import json
+import sys
 
 
 @unique
@@ -65,9 +67,9 @@ class PCEIdentity:
         self.type = stream.get_int(2)
         self.flattenedSize = stream.get_int(1)
         self.flags = stream.get_int(1)
-        self.machineType = bytes.decode(self.stream.get_mem(8)).strip("\u0000")
+        self.machineType = bytes.decode(stream.get_mem(8)).strip("\u0000")
         self.serialNumber = bytes.decode(
-            self.stream.get_mem(12)).strip("\u0000")
+            stream.get_mem(12)).strip("\u0000")
         if self.flattenedSize < (4 + 8 + 12):
             print("PCE identity structure size field too small")
             return
@@ -77,9 +79,9 @@ class PCEIdentity:
 
 
 class MRUCallout:
-    def __init__(self) -> None:
-        self.priority
-        self.id
+    def __init__(self, priority: int, id: int) -> None:
+        self.priority = priority
+        self.id = id
 
 
 class MRU:
@@ -88,12 +90,10 @@ class MRU:
         self.flattenedSize = stream.get_int(1)
         self.flags = stream.get_int(1)
         self.reserved4B = stream.get_int(4)
-        mrus = []
-        for i in range(self.flags & 0xf):
-            mru = MRUCallout()
-            mru.muPriority = stream.get_int(4)
-            mru.muId = stream.get_int(4)
-            mrus.append(mru)
+        self.mrus = []
+        for _ in range(self.flags & 0xf):
+            mru = MRUCallout(stream.get_int(4), stream.get_int(4))
+            self.mrus.append(mru)
 
 
 class Callout:
@@ -148,9 +148,8 @@ class SRC:
     - An optional subsection for Callouts
     """
 
-    def __init__(self, registry: Registry, stream: DataStream, sectionID: int, sectionLen: int,
+    def __init__(self, stream: DataStream, sectionID: int, sectionLen: int,
                  versionID: int, subType: int, componentID: int, creatorID: str):
-        self.registry = registry
         self.stream = stream
         self.sectionID = sectionID
         self.sectionLen = sectionLen
@@ -168,30 +167,61 @@ class SRC:
         self.srcType = 0
         self.asciiString = ""
 
-    def getErrorDetails(self, out: OrderedDict, code: str):
-        code = "0x" + code
-        num, source, description, message, args = self.registry.getErrorMessgge(
-            code)
-        if len(args) > 0:
+    def buildMessage(self, details: dict) -> str:
+        if 'Message' not in details:
+            return ''
+
+        message = details['Message']
+        if 'MessageArgSources' in details:
+            hexword_args = []
+
+            # Strip off the word number from SRCWordN and subtract 2 to get
+            # the hexData word to use
+            for arg in details['MessageArgSources']:
+                hexword_args.append(hex(self.hexData[int(arg[-1]) - 2]))
+
+            # message may have %1, etc. replace with {} and then fill
+            # those in with the hexData words
             import re
             message = re.sub(r'%[1-9]', "{}", message)
-            message.format(*args)
-        if num >= 2 and num <= 9:
-            num -= 2
-        srcValue = "0x" + str(self.hexData[num])
-        erros = list()
-        erros.append(srcValue)
-        erros.append(description)
+            message = message.format(*hexword_args)
+
+        return message
+
+    def buildHexwordDescs(self, details: dict) -> OrderedDict:
+        descriptions = OrderedDict()
+        if 'Words6To9' not in details or not details['Words6To9']:
+            return
+
+        for num, word_contents in details['Words6To9'].items():
+            # Nobody wants to see these if no description
+            if 'Description' not in word_contents:
+                continue
+
+            index = int(num) - 2
+            descriptions[word_contents['AdditionalDataPropSource']] = \
+                [self.hexData[index], word_contents['Description']]
+
+        return descriptions
+
+    def getErrorDetails(self, out: OrderedDict, code: str, srcType: str):
+        code = "0x" + code
+        registry = Registry()
+        details = registry.getErrorMessage(code, srcType)
 
         od = OrderedDict()
-        od["Message"] = message
-        od[source] = erros
-        out["Error Details"] = od
+        od["Message"] = self.buildMessage(details)
+        if od["Message"]:
+            descs = self.buildHexwordDescs(details)
+            if descs:
+                od.update(descs)
+
+            out["Error Details"] = od
 
     def getCallouts(self, out: OrderedDict):
         od = OrderedDict()
-        subsectionID = self.stream.get_int(1)
-        subsectionFlags = self.stream.get_int(1)
+        _ = self.stream.get_int(1)  # subsectionID
+        _ = self.stream.get_int(1)  # subsectionFlags
         subsectionWordLength = self.stream.get_int(2)
         currentLength = 4
         callouts = []
@@ -253,9 +283,11 @@ class SRC:
             return cls.parseSRCToJson(self.asciiString, hexwords[0], hexwords[1], hexwords[2],
                                       hexwords[3], hexwords[4], hexwords[5], hexwords[6], hexwords[7])
         except Exception as e:
-            print(str(e))
+            print('Error getting SRC details for {}: {}'.format(
+                self.asciiString.rstrip(), str(e)), file=sys.stderr)
+            return ''
 
-    def toJSON(self) -> str:
+    def toJSON(self) -> OrderedDict:
         self.version = "0x" + self.stream.get_mem(1).hex()
         self.flags = self.stream.get_int(1)
         self.reserved1B = self.stream.get_int(1)
@@ -281,7 +313,8 @@ class SRC:
             out["Terminate FW Error"] = "True" if self.hexData[3] & ErrorStatusFlags.terminateFwErr.value else "False"
             out["Deconfigured"] = "True" if self.hexData[3] & ErrorStatusFlags.deconfigured.value else "False"
             out["Guarded"] = "True" if self.hexData[3] & ErrorStatusFlags.guarded.value else "False"
-            self.getErrorDetails(out, self.asciiString[2:2])
+            self.getErrorDetails(
+                out, self.asciiString[4:8], self.asciiString[0:2])
 
         out["Valid Word Count"] = "0x" + "%02X" % self.wordCount
         out["Reference Code"] = self.asciiString.strip()
@@ -295,11 +328,15 @@ class SRC:
             out["Hex Word " + str(i)] = tmpWord
             hexwords.append(tmpWord)
 
+        # add zeroes to get 8 hexwords for parse()
+        while len(hexwords) < 8:
+            hexwords.append('00000000')
+
         if self.flags & HeaderFlags.additionalSections.value:
             self.getCallouts(out)
 
         value = self.parse(hexwords)
-        if value != "":
+        if value != '' and value != 'null':
             out["SRC Details"] = json.loads(value)
 
         return out

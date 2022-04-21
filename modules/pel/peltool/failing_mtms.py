@@ -22,7 +22,7 @@ class FailingMTMS:
         self.machineType = ""
         self.serialNumber = ""
 
-    def toJSON(self) -> str:
+    def toJSON(self) -> OrderedDict:
         self.machineType = bytes.decode(self.stream.get_mem(8))
         self.serialNumber = bytes.decode(self.stream.get_mem(12))
 

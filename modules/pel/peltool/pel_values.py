@@ -7,6 +7,28 @@ creatorIDs = {"B": "Hostboot", "C": "HMC", "H": "PHYP", "K": "Sapphire",
               "L": "Partition FW", "M": "I/O Drawer", "O": "BMC",
               "P": "PowerNV", "S": "SLIC",  "T": "OCC"}
 
+"""
+Section Names
+"""
+sectionNames = {
+    "PH": "Private Header",
+    "UH": "User Header",
+    "PS": "Primary SRC",
+    "SS": "Secondary SRC",
+    "EH": "Extended User Header",
+    "MT": "Failing MTMS",
+    "DH": "Dump Location",
+    "SW": "Firmware Error",
+    "LP": "Impacted Partition",
+    "LR": "Logical Resource",
+    "HM": "HMC ID",
+    "EP": "EPOW",
+    "IE": "IO Event",
+    "MI": "MFG Info",
+    "CH": "Call Home",
+    "UD": "User Data",
+    "EI": "Env Info",
+    "ED": "Extended User Data"}
 
 """
 The possible values for the subsystem field  in the User Header.

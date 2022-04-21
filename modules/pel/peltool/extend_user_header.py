@@ -8,9 +8,6 @@ class ExtendedUserHeader:
     This represents the Extended User Header section in a PEL.  It is  a required
     section.  It contains code versions, an MTMS subsection, and a string called
     a symptom ID.
-
-    The Section base class handles the section header structure that every
-    PEL section has at offset zero.
     """
 
     def __init__(self, stream: DataStream, sectionID: int, sectionLen: int,
@@ -33,7 +30,7 @@ class ExtendedUserHeader:
         self.symptomIDSize = ""
         self.symptomID = ""
 
-    def toJSON(self) -> str:
+    def toJSON(self) -> OrderedDict:
         self.machineType = bytes.decode(self.stream.get_mem(8))
         self.serialNumber = bytes.decode(self.stream.get_mem(12))
         self.serverFWVersion = bytes.decode(self.stream.get_mem(16))
@@ -44,7 +41,11 @@ class ExtendedUserHeader:
         self.reserved1B2 = self.stream.get_int(1)
         self.reserved1B3 = self.stream.get_int(1)
         self.symptomIDSize = self.stream.get_int(1)
-        self.symptomID = bytes.decode(self.stream.get_mem(self.symptomIDSize))
+        if self.symptomIDSize != 0:
+            self.symptomID = bytes.decode(
+                self.stream.get_mem(self.symptomIDSize))
+        else:
+            self.symptomID = ''
 
         out = OrderedDict()
         out["Section Version"] = self.versionID

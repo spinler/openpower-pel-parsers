@@ -1,26 +1,23 @@
 from pel.datastream import DataStream
+from pel.hexdump import hexdump
 from collections import OrderedDict
 import json
-from pel.peltool.parse_user_data import ParseUserData
 
 
-class UserData:
+class Default:
     """
-    This represents the User Data section in a PEL.  It is free form data
-    that the creator knows the contents of.  The component ID, version,
-    and sub-type fields in the section header are used to identify the
-    format.
+    This represents a section in a PEL that isn't handled by another class.
+    The toJSON function will just hexdump the contents.
     """
 
     def __init__(self, stream: DataStream, sectionID: int, sectionLen: int,
-                 versionID: int, subType: int, componentID: int, creatorID: str):
+                 versionID: int, subType: int, componentID: int):
         self.stream = stream
         self.sectionID = sectionID
         self.sectionLen = sectionLen
         self.versionID = versionID
         self.subType = subType
         self.componentID = componentID
-        self.creatorID = creatorID
         self.dataLength = sectionLen - 8
         self.data = self.stream.get_mem(self.dataLength)
 
@@ -31,15 +28,7 @@ class UserData:
         out["Sub-section type"] = self.subType
         out["Created by"] = "0x{:02X}".format(self.componentID)
 
-        parser = ParseUserData(self.creatorID, self.componentID, self.subType,
-                               self.versionID, self.data)
-
-        value = parser.parse()
-
-        j = json.loads(value)
-        if not isinstance(j, dict):
-            out['Data'] = j
-        else:
-            out.update(j)
+        mv = memoryview(self.data)
+        out['Data'] = hexdump(mv)
 
         return out

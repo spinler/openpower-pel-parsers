@@ -1,6 +1,7 @@
 from pel.datastream import DataStream
 from collections import OrderedDict
-from pel.peltool.pel_values import *
+from pel.peltool.pel_values import actionFlagsValues, subsystemValues, \
+    severityValues, eventTypeValues, eventScopeValues, transmissionStates
 
 
 class UserHeader:
@@ -33,7 +34,7 @@ class UserHeader:
         self.actionFlags = 0
         self.states = 0
 
-    def toJSON(self) -> str:
+    def toJSON(self) -> OrderedDict:
         self.eventSubsystem = self.stream.get_int(1)
         self.eventScope = self.stream.get_int(1)
         self.eventSeverity = self.stream.get_int(1)
@@ -58,8 +59,9 @@ class UserHeader:
         out["Event Severity"] = severityValues[self.eventSeverity][1]
         out["Event Type"] = eventTypeValues[self.eventType][1]
         out["Action Flags"] = list
-        out["Host Transmission"] = transmissionStates[self.states & 0xff]
-        out["HMC Transmission"] = transmissionStates[(
-            self.states & 0x0000FF00) >> 8]
+        out["Host Transmission"] = transmissionStates.get(
+            self.states & 0xff, 'Unknown')
+        out["HMC Transmission"] = transmissionStates.get(
+            (self.states & 0x0000FF00) >> 8, 'Unknown')
 
         return out
