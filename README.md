@@ -1,4 +1,18 @@
-# SRC and user data parsers for OpenPOWER PELs
+# Python PEL tools
+
+## PEL parser
+
+The pel.peltool.peltool module parses PEL files and prints the resulting PEL
+fields in JSON.  It will load and run the various component parsers if they are
+available.
+
+### Usage:
+```
+$ python3 -m pel.peltool.peltool -f <PEL file>
+$ python3 .../site-packages/pel/peltool/peltool.py -f <PEL file>
+```
+
+## SRC and user data parsers for OpenPOWER PELs
 
 The parsers are made up of python modules which are packaged together with
 `setuptools` via the `setup.py` script. The modules are kept in a subdirectory
@@ -8,7 +22,7 @@ the packages.
 For a reference on the requirements of these python modules see the
 [OpenPOWER PEL README.md](https://github.ibm.com/openbmc/phosphor-logging/blob/master/extensions/openpower-pels/README.md#adding-python3-modules-for-pel-userdata-and-src-parsing).
 
-## SRC parsers
+### SRC parsers
 
 Each subsystem requiring an SRC parser will create a single module in the format
 of:
@@ -41,7 +55,7 @@ Only the top level `parseSRCToJson` function is required.
 module. This wrapper mimics how the modules work for user data sections. See
 [modules/srcparsers/osrc/osrc.py](modules/srcparsers/osrc/osrc.py) for details.
 
-## User data parsers
+### User data parsers
 
 Each subsystem requiring user data parsers will create a module for each
 component in the format of:
