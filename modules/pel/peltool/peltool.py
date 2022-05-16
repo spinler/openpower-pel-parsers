@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import os
+import sys
 import json
 import argparse
 from pel.datastream import DataStream
@@ -181,6 +182,12 @@ def main():
 
     parser.add_argument('-f', '--file', dest='file',
                         help='input pel file to parse')
+    parser.add_argument('-s', '--serviceable',
+                        help='Only parse serviceable (not info/recovered) PELs',
+                        action='store_true')
+    parser.add_argument('-n', '--non-serviceable',
+                        help='Only parse non-serviceable (info/recovered) PELs',
+                        action='store_true')
     args = parser.parse_args()
 
     with open(args.file, 'rb') as fd:
@@ -189,11 +196,17 @@ def main():
         out = OrderedDict()
         ret, ph = generatePH(stream, out)
         if ret == False:
-            return
+            sys.exit(1)
 
-        ret, _ = generateUH(stream, ph.creatorID, out)
+        ret, uh = generateUH(stream, ph.creatorID, out)
         if ret == False:
-            return
+            sys.exit(1)
+
+        if args.serviceable and not uh.isServiceable():
+            sys.exit(0)
+
+        if args.non_serviceable and uh.isServiceable():
+            sys.exit(0)
 
         section_jsons = []
         for _ in range(2, ph.sectionCount):
