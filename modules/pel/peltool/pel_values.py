@@ -226,8 +226,3 @@ calloutPriorityValues = {
     0x42: "Medium Priority B, replace these as a group",
     0x43: "Medium Priority C, replace these as a group",
     0x4C: "Lowest priority replacement"}
-
-"""
-Map for Procedure Descriptions
-"""
-procedureDesc = {"TODO": "TODO"}

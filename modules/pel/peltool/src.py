@@ -4,7 +4,7 @@ from enum import Enum, unique
 from pel.peltool.pel_types import SRCType
 from pel.peltool.registry import Registry
 from pel.peltool.pel_values import failingComponentType, \
-    calloutPriorityValues, procedureDesc
+    calloutPriorityValues
 from pel.peltool.comp_id import getDisplayCompID
 import json
 import sys
@@ -219,6 +219,23 @@ class SRC:
 
             out["Error Details"] = od
 
+    def getProcedureDesc(self, procName: str, out: OrderedDict):
+        """
+        Look up the procedure description from a
+        calloutparsers.Xcallouts.Xcallouts module if it's there.
+        (X = creator ID in lower case)
+        """
+        try:
+            import importlib
+            name = self.creatorID.lower() + "callouts"
+            cls = importlib.import_module(
+                "calloutparsers." + name + "." + name)
+            desc = cls.getMaintProcDesc(procName)
+            if desc:
+                out["Description"] = json.loads(desc)
+        except:
+            pass
+
     def getCallouts(self, out: OrderedDict):
         od = OrderedDict()
         _ = self.stream.get_int(1)  # subsectionID
@@ -246,9 +263,7 @@ class SRC:
                     json["Part Number"] = callout.fruIdentity.pnOrProcedureID
                 if callout.fruIdentity.flags & Flags.maintProcSupplied.value:
                     json["Procedure"] = callout.fruIdentity.pnOrProcedureID
-                    if callout.fruIdentity.pnOrProcedureID in procedureDesc:
-                        json["Description"] = \
-                            procedureDesc[callout.fruIdentity.pnOrProcedureID]
+                    self.getProcedureDesc(json["Procedure"], json)
                 if callout.fruIdentity.flags & Flags.ccinSupplied.value:
                     json["CCIN"] = callout.fruIdentity.ccin
                 if callout.fruIdentity.flags & Flags.snSupplied.value:
