@@ -1,6 +1,7 @@
 import importlib
 import json
 
+
 def parseSRCToJson(refcode: str,
                    word2: str, word3: str, word4: str, word5: str,
                    word6: str, word7: str, word8: str, word9: str) -> str:
@@ -30,6 +31,13 @@ def parseSRCToJson(refcode: str,
     component = subsystem + refcode[4:6].lower() + '00'
     module_name = '.'.join(['srcparsers', component, component])
 
+    # There is a special case, like a hostboot TI, where the BMC will create
+    # a PEL with a hostboot SRC.  When that happens, route it through the
+    # hostboot SRC parser instead.
+    if refcode[:2] == 'BC':
+        name = 'bsrc'
+        module_name = '.'.join(['srcparsers', name, name])
+
     try:
         # Grab the module if it exist. If not, it will throw an exception.
         module = importlib.import_module(module_name)
@@ -46,4 +54,3 @@ def parseSRCToJson(refcode: str,
                                     word6, word7, word8, word9)
 
     return out
-
