@@ -36,6 +36,10 @@ class UserHeader:
         self.actionFlags = 0
         self.states = 0
 
+    def isServiceable(self) -> bool:
+        # consider it a serviceable PEL if not an info or recovered error
+        return self.eventSeverity != 0x00 and self.eventSeverity != 0x10
+
     def toJSON(self) -> OrderedDict:
         self.eventSubsystem = self.stream.get_int(1)
         self.eventScope = self.stream.get_int(1)
@@ -59,7 +63,8 @@ class UserHeader:
             self.componentID, self.creatorID)
         out["Subsystem"] = subsystemValues.get(self.eventSubsystem, 'Invalid')
         out["Event Scope"] = eventScopeValues.get(self.eventScope, 'Invalid')
-        out["Event Severity"] = severityValues.get(self.eventSeverity, 'Invalid')
+        out["Event Severity"] = severityValues.get(
+            self.eventSeverity, 'Invalid')
         out["Event Type"] = eventTypeValues.get(self.eventType, 'Invalid')
         out["Action Flags"] = list
         out["Host Transmission"] = transmissionStates.get(
