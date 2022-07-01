@@ -84,13 +84,18 @@ OpenPOWER PEL README.md (see link above).
 ## Testing
 
 It is highly encouraged to build and maintain automated test cases using the
-standard [unittest module](https://docs.python.org/3/library/unittest.html). All
-test modules should be stored in the `test/` directory (or subdirectory).
-Remember that all of the test files must be `modules` or `packages` importable
-from the top-level `test/` directory. To run all test cases in `test/`, issue
-the following command (at project root):
+standard [unittest module](https://docs.python.org/3/library/unittest.html).
+All test modules should be stored in the `test/` directory (or subdirectory).
+Remember that all of the test files must be `modules` or `packages`
+importable from the top-level `test/` directory, meaning all subdirectories
+must contain an `__init__.py` and the file names must be valid identifiers.
+
+To run all test cases in `test/`, issue the following commands:
 
 ```sh
-python3 -m unittest discover -s 'test/' -v
+cd modules/
+python3 -m unittest discover -v -s '../test/'
 ```
 
+**Reminder:** It is important that the above unittest command is run in the
+`modules` subdirectory. This ensures that `modules` is in the import path.

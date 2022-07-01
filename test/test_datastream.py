@@ -1,7 +1,3 @@
-# Add the modules directory to the path.
-import os, sys
-sys.path.append(os.path.join(os.path.dirname(sys.path[0]), 'modules'))
-
 import unittest
 
 from pel.datastream import DataStream
@@ -36,5 +32,3 @@ class TestDataStream(unittest.TestCase):
         # attempt to access out of bounds
         with self.assertRaises(AssertionError):
             s.get_mem(1)
-
-
