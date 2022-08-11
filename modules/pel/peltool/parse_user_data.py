@@ -1,10 +1,7 @@
-from pel.datastream import DataStream
-from collections import OrderedDict
 from pel.peltool.pel_values import creatorIDs
 from pel.hexdump import hexdump
 from enum import Enum, unique
 import json
-import sys
 
 
 @unique
@@ -40,6 +37,17 @@ class ParseUserData:
         else:
             value = self.parseCustom()
 
+        # Catch if value is None, otherwise python crashes
+        if value == None:
+            d = dict()
+            # in case we have problems, try to make every attempt to get some data points out
+            d["Error"] = ("Parser returned a value of None for creatorID={} compID={} subType={} version={}"
+                     .format(self.creatorID, "0x%04X" % self.compID, self.subType, self.version))
+            if self.data:
+                mv = memoryview(self.data)
+                d["Data"] = hexdump(mv)
+            return json.dumps(d)
+        # Normal processing below
         return value
 
     def parseCustom(self) -> str:
@@ -47,18 +55,26 @@ class ParseUserData:
         name = (self.creatorID.lower() + "%04X" % self.compID).lower()
         try:
             cls = importlib.import_module("udparsers." + name + "." + name)
-            mv = memoryview(self.data)
-            return cls.parseUDToJson(self.subType, self.version, mv)
+            if self.data:
+                mv = memoryview(self.data)
+                return cls.parseUDToJson(self.subType, self.version, mv)
         except ImportError:
-            mv = memoryview(self.data)
-            return json.dumps(hexdump(mv))
+            # No print for informational purposes, this is encountered often, e.g. PHYP
+            if self.data:
+                mv = memoryview(self.data)
+                return json.dumps(hexdump(mv))
         except Exception as e:
-            print('Failed parsing user data for creator {} compID {} '
-                  'subType {} version {}: {}'.format(
-                      self.creatorID, "0x%04X" % self.compID,
-                      "0x%X" % self.subType, self.version, str(e)), file=sys.stderr)
-            mv = memoryview(self.data)
-            return json.dumps(hexdump(mv))
+            d = dict()
+            # in case we do NOT have data, dump the Error at a minimum
+            d["Error"] = ("Failed parsing user data for creator={} compID={} subType={} version={} Exception={}"
+                              .format(self.creatorID, "0x%04X" % self.compID, "0x%X" % self.subType, self.version, e))
+            if self.data:
+                mv = memoryview(self.data)
+                d["Data"] = hexdump(mv)
+            return json.dumps(d)
+        # We should have returned above, but in case we did NOT
+        return json.dumps("")
+
 
     def getBuiltinFormatJSON(self) -> str:
         if self.subType == UserDataFormat.json.value:
