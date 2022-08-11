@@ -22,7 +22,7 @@ class ParseUserData:
     ExtUserData sections.
     """
 
-    def __init__(self, creatorID: str, compID: str, subType: int, version: int,
+    def __init__(self, creatorID: str, compID: int, subType: int, version: int,
                  data: bytes):
         self.creatorID = creatorID
         self.compID = compID
