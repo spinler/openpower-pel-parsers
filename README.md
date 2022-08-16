@@ -1,5 +1,10 @@
 # Python PEL tools
 
+- [PEL parser](#pel-parser)
+- [SRC and UserData parsers](#src-and-user-data-parsers-for-openpower-pels)
+- [Testing](#testing)
+- [peltool wrapper module](#peltool-wrapper-module)
+
 ## PEL parser
 
 The pel.peltool.peltool module parses PEL files and prints the resulting PEL
@@ -99,3 +104,11 @@ python3 -m unittest discover -v -s '../test/'
 
 **Reminder:** It is important that the above unittest command is run in the
 `modules` subdirectory. This ensures that `modules` is in the import path.
+
+## peltool wrapper module
+
+There is a [setup.py](peltool-wrapper/setup.py) in the `peltool-wrapper`
+directory that is used to build a `peltool-wrapper` python module that only
+contains dependencies to the component modules that make up peltool. Installing
+this module will then bring in and install all peltool modules assuming they
+are available in pip\'s search path.
