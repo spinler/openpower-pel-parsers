@@ -148,6 +148,24 @@ def _parse_hb_scratch_regs(version: int, data: memoryview) -> str:
     # Convert to JSON format and dump to a string.
     return json.dumps({"Hostboot Scratch Registers": out})
 
+def _parse_scratch_reg_sig(version: int, data: memoryview) -> str:
+    """
+    Parser for the error signature stored in the Hostboot scratch registers.
+    """
+
+    stream = DataStream(data, byte_order='big', is_signed=False)
+
+    # Extract the hex string values of the data.
+    chipId = '0x' + stream.get_mem(4).hex()
+    sigId = '0x' + stream.get_mem(4).hex()
+
+    out = {
+        'Chip ID': chipId,
+        'Signature ID': sigId
+    }
+
+    # Convert to JSON format and dump to a string.
+    return json.dumps({"Scratch Register Error Signature": out})
 
 def _parse_default(version: int, data: memoryview) -> str:
     """
@@ -168,6 +186,7 @@ def parseUDToJson(subtype: int, version: int, data: memoryview) -> str:
         2: _parse_register_dump,
         3: _parse_callout_ffdc,
         4: _parse_hb_scratch_regs,
+        5: _parse_scratch_reg_sig,
     }
     subtype_func = parsers.get(subtype, _parse_default)
 
