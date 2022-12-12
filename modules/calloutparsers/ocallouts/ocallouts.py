@@ -26,6 +26,10 @@ procedures = {
 
     "BMC0006": [
         "A system uncorrectable error has occurred."
+    ],
+
+    "BMC0007": [
+        "A system data mismatch has been detected."
     ]
 }
 
