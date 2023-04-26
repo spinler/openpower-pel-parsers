@@ -31,6 +31,10 @@ procedures = {
     "BMC0007": [
         "A system data mismatch has been detected."
     ]
+
+    "BMC0008": [
+        "Failed parts present in the system. Service needed"
+    ]
 }
 
 
