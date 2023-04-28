@@ -328,9 +328,14 @@ class SRC:
         out["Virtual Progress SRC"] = "True" if self.flags & HeaderFlags.virtualProgressSRC.value else "False"
         out["I5/OS Service Event Bit"] = "True" if self.flags & HeaderFlags.i5OSServiceEventBit.value else "False"
         out["Hypervisor Dump Initiated"] = "True" if self.flags & HeaderFlags.hypDumpInit.value else "False"
-        if self.srcType == SRCType.bmcError.value or self.srcType == SRCType.powerError.value:
+
+        is_bmc_src = self.srcType == SRCType.bmcError.value or self.srcType == SRCType.powerError.value
+        is_hostboot_src = self.srcType == SRCType.hostbootError.value
+
+        if is_bmc_src:
             out["Backplane CCIN"] = str("%04X" % (self.hexData[1] >> 16))
             out["Terminate FW Error"] = "True" if self.hexData[3] & ErrorStatusFlags.terminateFwErr.value else "False"
+        if is_bmc_src or is_hostboot_src:
             out["Deconfigured"] = "True" if self.hexData[3] & ErrorStatusFlags.deconfigured.value else "False"
             out["Guarded"] = "True" if self.hexData[3] & ErrorStatusFlags.guarded.value else "False"
             self.getErrorDetails(

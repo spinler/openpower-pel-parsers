@@ -35,3 +35,4 @@ class SectionID(Enum):
 class SRCType(Enum):
     bmcError = "BD"
     powerError = "11"
+    hostbootError = "BC"
