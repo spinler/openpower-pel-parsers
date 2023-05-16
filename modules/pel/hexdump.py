@@ -32,7 +32,7 @@ def hexdump(data: memoryview,
 
             # Add spaces in between each chunk.
             if 0 != j and 0 == j % bytes_per_chunk:
-                raw += ' '
+                raw += '  '
 
             # Convert to hex string.
             raw += ("%02X") % (b)
@@ -45,7 +45,7 @@ def hexdump(data: memoryview,
         text = text.ljust(bytes_per_line)
 
         # Append a new line in the output
-        dump.append(("%08X:  %s  |%s|") % (i, raw, text))
+        dump.append(("%08X     %s     %s") % (i, raw, text))
 
     return dump
 
@@ -54,9 +54,9 @@ def hexdump(data: memoryview,
 #     * 4 byte addresses
 #     * 16 bytes per line
 #     * 4 bytes per chunk
-#     * ASCII representation of bytes surrounded by '|' characters
+#     * ASCII representation of bytes
 DEFAULT_LINE_FORMAT = \
-    'AAAAAAAA:  DDDDDDDD DDDDDDDD DDDDDDDD DDDDDDDD  |CCCCCCCCCCCCCCCC|'
+    'AAAAAAAA     DDDDDDDD  DDDDDDDD  DDDDDDDD  DDDDDDDD     CCCCCCCCCCCCCCCC'
 
 
 def parse(lines: list,
