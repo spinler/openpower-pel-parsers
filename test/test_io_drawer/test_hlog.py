@@ -167,9 +167,9 @@ class TestHLog(unittest.TestCase):
         expected_lines = [
             'Hex Dump',
             '--------',
-            '00000000:  23011246 07A113FF 2F0002AB 1621EF20  |#..F..../....!. |',
-            '00000010:  21030000 16F78809 20030230 0B110003  |!....... ..0....|',
-            '00000020:  98765689 10100101 01020004 00F0      |.vV...........  |',
+            '00000000     23011246  07A113FF  2F0002AB  1621EF20     #..F..../....!. ',
+            '00000010     21030000  16F78809  20030230  0B110003     !....... ..0....',
+            '00000020     98765689  10100101  01020004  00F0         .vV...........  ',
             '',
             'Non-Zero Field Values',
             '---------------------',
@@ -223,7 +223,7 @@ class TestHLog(unittest.TestCase):
         expected_lines = [
             'Hex Dump',
             '--------',
-            '00000000:  01DEAD                               |...             |',
+            '00000000     01DEAD                                     ...             ',
             '',
             'Non-Zero Field Values',
             '---------------------',
@@ -238,7 +238,7 @@ class TestHLog(unittest.TestCase):
         expected_lines = [
             'Hex Dump',
             '--------',
-            '00000000:  01DE                                 |..              |',
+            '00000000     01DE                                       ..              ',
             '',
             'Non-Zero Field Values',
             '---------------------',
@@ -252,7 +252,7 @@ class TestHLog(unittest.TestCase):
         expected_lines = [
             'Hex Dump',
             '--------',
-            '00000000:  01DEADBE                             |....            |',
+            '00000000     01DEADBE                                   ....            ',
             '',
             'Non-Zero Field Values',
             '---------------------',
@@ -267,7 +267,7 @@ class TestHLog(unittest.TestCase):
         expected_lines = [
             'Hex Dump',
             '--------',
-            '00000000:  00DEAD                               |...             |',
+            '00000000     00DEAD                                     ...             ',
             '',
             'Non-Zero Field Values',
             '---------------------',

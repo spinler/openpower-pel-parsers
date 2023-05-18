@@ -93,7 +93,7 @@ class TestM2C00(unittest.TestCase):
         self.assertEqual(len(output), 1)
         self.assertTrue(key in output)
         self.assertEqual(output[key][0],
-                         '00000000:  DEADBEEF                             |....            |')
+                         '00000000     DEADBEEF                                   ....            ')
 
 
     def test_parseUDToJson(self):

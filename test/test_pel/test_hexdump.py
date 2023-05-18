@@ -14,7 +14,7 @@ class TestHexDump(unittest.TestCase):
         lines = hexdump(data)
         self.assertEqual(len(lines), 1)
         self.assertEqual(lines[0],
-            '00000000:  DEADBEEF BADC0FFE 42414443 30464645  |........BADC0FFE|')
+            '00000000     DEADBEEF  BADC0FFE  42414443  30464645     ........BADC0FFE')
 
         # Test where bytes_per_line and bytes_per_chunk specified
         data = memoryview(b'\xde\xad\xbe\xef'
@@ -23,8 +23,8 @@ class TestHexDump(unittest.TestCase):
                           b'\x30\x46\x46\x45')
         lines = hexdump(data, bytes_per_line=8, bytes_per_chunk=2)
         self.assertEqual(len(lines), 2)
-        self.assertEqual(lines[0], '00000000:  DEAD BEEF BADC 0FFE  |........|')
-        self.assertEqual(lines[1], '00000008:  4241 4443 3046 4645  |BADC0FFE|')
+        self.assertEqual(lines[0], '00000000     DEAD  BEEF  BADC  0FFE     ........')
+        self.assertEqual(lines[1], '00000008     4241  4443  3046  4645     BADC0FFE')
 
         # Test with less than one full line of data
         data = memoryview(b'\xde\xad\xbe\xef'
@@ -33,7 +33,7 @@ class TestHexDump(unittest.TestCase):
         lines = hexdump(data)
         self.assertEqual(len(lines), 1)
         self.assertEqual(lines[0],
-            '00000000:  DEADBEEF BADC0FFE 4241               |........BA      |')
+            '00000000     DEADBEEF  BADC0FFE  4241                   ........BA      ')
 
         # Test with one full and one partial line of data
         data = memoryview(b'\xde\xad\xbe\xef'
@@ -41,8 +41,8 @@ class TestHexDump(unittest.TestCase):
                           b'\x42')
         lines = hexdump(data, bytes_per_line=8, bytes_per_chunk=2)
         self.assertEqual(len(lines), 2)
-        self.assertEqual(lines[0], '00000000:  DEAD BEEF BADC 0FFE  |........|')
-        self.assertEqual(lines[1], '00000008:  42                   |B       |')
+        self.assertEqual(lines[0], '00000000     DEAD  BEEF  BADC  0FFE     ........')
+        self.assertEqual(lines[1], '00000008     42                         B       ')
 
         # Test where no data bytes specified
         data = memoryview(b'')
@@ -62,7 +62,7 @@ class TestHexDump(unittest.TestCase):
     def test_parse(self):
         # Test with default line format: Less than one full line of data
         lines = [
-            '00000000:  DEADBEEF BADC0FFE 4241               |........BA      |'
+            '00000000     DEADBEEF  BADC0FFE  4241               ........   BA     '
         ]
         expected_data = memoryview(b'\xde\xad\xbe\xef'
                                    b'\xba\xdc\x0f\xfe'
@@ -72,7 +72,7 @@ class TestHexDump(unittest.TestCase):
 
         # Test with default line format: One full data line
         lines = [
-            '00000000:  DEADBEEF BADC0FFE 42414443 30464645  |........BADC0FFE|'
+            '00000000     DEADBEEF  BADC0FFE  42414443  30464645     ........BADC0FFE'
         ]
         expected_data = memoryview(b'\xde\xad\xbe\xef'
                                    b'\xba\xdc\x0f\xfe'
@@ -83,8 +83,8 @@ class TestHexDump(unittest.TestCase):
 
         # Test with default line format: One full and one partial line
         lines = [
-            '00000000:  01200142 46414E53 20202020 A9876543  |. .BFANS    ..eC|',
-            '00000010:  00010203 FF000074 DD                 |.......t.       |'
+            '00000000     01200142  46414E53  20202020  A9876543     . .BFANS    ..eC',
+            '00000010     00010203  FF000074  DD                     ....... t.      '
         ]
         expected_data = memoryview(b'\x01\x20\x01\x42'
                                    b'\x46\x41\x4e\x53'
