@@ -18,8 +18,8 @@ def hexdump(data: memoryview,
 
     num_chunks = math.ceil(bytes_per_line / bytes_per_chunk)
 
-    # Two char per byte plus the spaces in between each chunk.
-    char_per_line = bytes_per_line * 2 + num_chunks - 1
+    # Two char per byte plus the 2 spaces in between each chunk.
+    char_per_line = bytes_per_line * 2 + (2 * num_chunks) - 2
 
     # Iterate one line at a time
     for i in range(0, len(data), bytes_per_line):
