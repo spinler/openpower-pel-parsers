@@ -781,7 +781,7 @@ class TestTrace(TestTraceBase):
         expected_lines = [
             ' 9:52:33 0132   326 E> Dev 0xfa04: Fail count = 48879',
             '                    Warning: Partial match with trace string from adt7470_fan_ctl.cpp(324)',
-            '                    00000000:  0000FA04 0000BEEF                    |........        |'
+            '                    00000000     0000FA04  0000BEEF                         ........        '
         ]
         self.assertEqual(lines, expected_lines)
 
@@ -802,7 +802,7 @@ class TestTrace(TestTraceBase):
         _format_trace_entry(entry, file, lines)
         expected_lines = [
             ' 9:52:33 0132   326 No trace string found with hash value 32613715',
-            '                    00000000:  0000FA04 0000BEEF                    |........        |'
+            '                    00000000     0000FA04  0000BEEF                         ........        '
         ]
         self.assertEqual(lines, expected_lines)
 
@@ -824,7 +824,7 @@ class TestTrace(TestTraceBase):
         _format_trace_entry(entry, file, lines)
         expected_lines = [
             ' 9:51:39 0123   339 I> BMP180: Calibration data',
-            '                    00000000:  01020304 DEADBE                      |.......         |'
+            '                    00000000     01020304  DEADBE                           .......         '
         ]
         self.assertEqual(lines, expected_lines)
 
@@ -881,7 +881,7 @@ class TestTrace(TestTraceBase):
             'HH:MM:SS Seq  Line  Entry Data',
             '-------- ---- ----- ----------',
             ' 9:51:39 0123   562 No trace string found with hash value 4294967295',
-            '                    00000000:  01020304 DEADBE                      |.......         |'
+            '                    00000000     01020304  DEADBE                           .......         '
         ]
         self.assertEqual(lines, expected_lines)
 
@@ -933,7 +933,7 @@ class TestTrace(TestTraceBase):
             'HH:MM:SS Seq  Line  Entry Data',
             '-------- ---- ----- ----------',
             ' 9:51:39 0123   339 I> BMP180: Calibration data',
-            '                    00000000:  DEADBEEF                             |....            |',
+            '                    00000000     DEADBEEF                                   ....            ',
             ' 9:52:31 0186   324 E> Dev 0xfa04: Fail count = 48879'
         ]
         self.assertEqual(lines, expected_lines)
@@ -954,7 +954,7 @@ class TestTrace(TestTraceBase):
         lines = parse_trace_data(data, self.string_file_path)
         expected_lines = [
             'Unable to parse trace data.',
-            '00000000:  01200142 46414E53 20202020 00000000  |. .BFANS    ....|',
-            '00000010:  00000000 00000074 000000FE 000000    |.......t....... |'
+            '00000000     01200142  46414E53  20202020  00000000     . .BFANS    ....',
+            '00000010     00000000  00000074  000000FE  000000       .......t....... '
         ]
         self.assertEqual(lines, expected_lines)
