@@ -2,6 +2,7 @@ from pel.datastream import DataStream
 from collections import OrderedDict
 from pel.peltool.parse_user_data import ParseUserData
 from pel.peltool.comp_id import getDisplayCompID
+from pel.peltool.config import Config
 import json
 
 
@@ -29,7 +30,7 @@ class ExtUserData:
         self.reserved2B = stream.get_int(2)
         self.data = stream.get_mem(dataLength)
 
-    def toJSON(self) -> OrderedDict:
+    def toJSON(self, config: Config) -> OrderedDict:
         out = OrderedDict()
         out["Section Version"] = self.versionID
         out["Sub-section type"] = self.subType
@@ -38,7 +39,7 @@ class ExtUserData:
         parser = ParseUserData(self.creatorID, self.componentID, self.subType,
                                self.versionID, self.data)
 
-        value = parser.parse()
+        value = parser.parse(config)
 
         j = json.loads(value)
         if not isinstance(j, dict):
