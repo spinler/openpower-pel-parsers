@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-import os
 import sys
 import json
 import argparse
@@ -18,6 +17,7 @@ from pel.peltool.ext_user_data import ExtUserData
 from pel.peltool.default import Default
 from pel.peltool.imp_partition import ImpactedPartition
 from pel.peltool.pel_values import sectionNames
+from pel.peltool.config import Config
 
 
 def getSectionName(sectionID: int) -> str:
@@ -62,10 +62,10 @@ def generateUH(stream: DataStream, creatorID: str, out: OrderedDict) -> (bool, U
 
 def generateSRC(stream: DataStream, out: OrderedDict,
                 sectionID: int, sectionLen: int, versionID: int, subType: int,
-                componentID: int, creatorID: str) -> (bool, SRC):
+                componentID: int, creatorID: str, config: Config) -> (bool, SRC):
     src = SRC(stream, sectionID, sectionLen,
               versionID, subType, componentID, creatorID)
-    out[getSectionName(sectionID)] = src.toJSON()
+    out[getSectionName(sectionID)] = src.toJSON(config)
     return True, src
 
 
@@ -89,20 +89,21 @@ def generateMT(stream: DataStream, out: OrderedDict, sectionID: int,
 
 def generateED(stream: DataStream, out: OrderedDict, sectionID: int,
                sectionLen: int, versionID: int, subType: int,
-               componentID: int) -> (bool, ExtUserData):
+               componentID: int, config: Config) -> (bool, ExtUserData):
     ed = ExtUserData(stream, sectionID, sectionLen,
                      versionID, subType, componentID)
-    out[getSectionName(sectionID)] = ed.toJSON()
+    out[getSectionName(sectionID)] = ed.toJSON(config)
     return True, ed
 
 
 def generateUD(stream: DataStream, out: OrderedDict, sectionID: int,
                sectionLen: int, versionID: int, subType: int,
-               componentID: int, creatorID: str) -> (bool, UserData):
+               componentID: int, creatorID: str,
+               config: Config) -> (bool, UserData):
     ud = UserData(stream, sectionID, sectionLen, versionID,
                   subType, componentID, creatorID)
 
-    out[getSectionName(sectionID)] = ud.toJSON()
+    out[getSectionName(sectionID)] = ud.toJSON(config)
     return True, ud
 
 
@@ -127,11 +128,11 @@ def generateDefault(stream: DataStream, out: OrderedDict, sectionID: int,
 
 def sectionFun(stream: DataStream, out: OrderedDict, sectionID: int,
                sectionLen: int, versionID: int, subType: int,
-               componentID: int, creatorID: str):
+               componentID: int, creatorID: str, config: Config):
     if sectionID == SectionID.primarySRC.value or \
             sectionID == SectionID.secondarySRC.value:
         generateSRC(stream, out, sectionID, sectionLen,
-                    versionID, subType, componentID, creatorID)
+                    versionID, subType, componentID, creatorID, config)
     elif sectionID == SectionID.extendedUserHeader.value:
         generateEH(stream, out, sectionID, sectionLen,
                    versionID, subType, componentID, creatorID)
@@ -140,10 +141,10 @@ def sectionFun(stream: DataStream, out: OrderedDict, sectionID: int,
                    versionID, subType, componentID, creatorID)
     elif sectionID == SectionID.extUserData.value:
         generateED(stream, out, sectionID, sectionLen,
-                   versionID, subType, componentID)
+                   versionID, subType, componentID, config)
     elif sectionID == SectionID.userData.value:
         generateUD(stream, out, sectionID, sectionLen,
-                   versionID, subType, componentID, creatorID)
+                   versionID, subType, componentID, creatorID, config)
     elif sectionID == SectionID.impactedPart.value:
         generateIP(stream, out, sectionID, sectionLen,
                    versionID, subType, componentID, creatorID)
@@ -188,7 +189,19 @@ def main():
     parser.add_argument('-n', '--non-serviceable',
                         help='Only parse non-serviceable (info/recovered) PELs',
                         action='store_true')
+    parser.add_argument('-c', '--config-file', dest='config_file',
+                        help='Path to JSON config file')
+    parser.add_argument('-p', '--no-plugins', dest='skip_plugins',
+                        action='store_true', help='Skip loading plugins')
     args = parser.parse_args()
+
+    config = Config()
+
+    if args.config_file:
+        config.setConfigFile(args.config_file)
+
+    if args.skip_plugins:
+        config.allow_plugins = False
 
     with open(args.file, 'rb') as fd:
         data = fd.read()
@@ -214,7 +227,7 @@ def main():
                 stream)
             section_json = {}
             sectionFun(stream, section_json, sectionID, sectionLen,
-                       versionID, subType, componentID, ph.creatorID)
+                       versionID, subType, componentID, ph.creatorID, config)
             section_jsons.append(section_json)
 
         buildOutput(section_jsons, out)

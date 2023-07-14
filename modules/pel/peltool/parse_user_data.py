@@ -1,4 +1,5 @@
 from pel.peltool.pel_values import creatorIDs
+from pel.peltool.config import Config
 from pel.hexdump import hexdump
 from enum import Enum, unique
 import json
@@ -30,12 +31,19 @@ class ParseUserData:
         self.version = version
         self.data = data
 
-    def parse(self) -> str:
+    def parse(self, config: Config) -> str:
         if self.creatorID in creatorIDs and creatorIDs[self.creatorID] == "BMC" \
                 and self.compID == 0x2000:
             value = self.getBuiltinFormatJSON()
         else:
-            value = self.parseCustom()
+            if config.allow_plugins:
+                value = self.parseCustom()
+            else:
+                d = dict()
+                if self.data:
+                    mv = memoryview(self.data)
+                    d["Data"] = hexdump(mv)
+                return json.dumps(d)
 
         # Catch if value is None, otherwise python crashes
         if value == None:

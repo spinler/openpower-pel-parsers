@@ -17,6 +17,34 @@ $ python3 -m pel.peltool.peltool -f <PEL file>
 $ python3 .../site-packages/pel/peltool/peltool.py -f <PEL file>
 ```
 
+### Configuration File
+
+The -c option allows a path to a JSON format configuration file to be passed
+in.
+
+The valid configuration options are:
+
+- no_plugins_unless: Disables all SRC/UserData/Callout plugin modules unless
+  some criteria is met.  Currently the only criteria is a match on the
+  reference code.  The '*' character can be used as a wildcard for a character.
+
+  Example:
+
+  ```json
+    {
+        "no_plugins_unless":
+        [
+            {
+                "comment":  "some comment",
+                "refcode": "BD802004"
+            },
+            {
+                "refcode": "BC**E5**"
+            }
+        ]
+    }
+  ```
+
 ## SRC and user data parsers for OpenPOWER PELs
 
 The parsers are made up of python modules which are packaged together with
