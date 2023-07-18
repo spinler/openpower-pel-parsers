@@ -11,11 +11,35 @@ The pel.peltool.peltool module parses PEL files and prints the resulting PEL
 fields in JSON.  It will load and run the various component parsers if they are
 available.
 
-### Usage:
-```
+### Usage
+
+The tool can parse a single PEL or a directory of PELs at once.
+
+```bash
 $ python3 -m pel.peltool.peltool -f <PEL file>
 $ python3 .../site-packages/pel/peltool/peltool.py -f <PEL file>
 ```
+
+The above commands write the output to standard out.
+
+```bash
+$ python3 -m pel.peltool.peltool -d <directory> -o <output directory>
+```
+
+The above command parses every PEL in the directory passed in and writes the
+output to `<output directory>/<original filename>.<PEL EID>.json`.  It will
+skip files that aren't PELs, though the '-e' option can be used to only look at
+files with a specific extension:
+
+```bash
+$ python3 -m pel.peltool.peltool -d <directory> -o <output directory> -e '.extracted'
+```
+
+If the `-o` option isn't specified, the files will be written to the same
+directory the PELs are in.
+
+The `-x` option can be used to tell peltool to delete the original file after
+it is parsed.
 
 ### Configuration File
 

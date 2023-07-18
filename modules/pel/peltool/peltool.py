@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import sys
+import os
 import json
 import argparse
 from pel.datastream import DataStream
@@ -178,6 +179,72 @@ def buildOutput(sections: list, out: OrderedDict):
             counts[name][1] = modifier + 1
 
 
+def parsePEL(stream: DataStream, config: Config, exit_on_error: bool):
+    out = OrderedDict()
+
+    ret, ph = generatePH(stream, out)
+    if ret is False:
+        if exit_on_error:
+            sys.exit(1)
+        else:
+            return "", ""
+
+    eid = ph.lEID
+    if (eid[0:2] == "0x"):
+        eid = eid[2:]
+
+    ret, uh = generateUH(stream, ph.creatorID, out)
+    if ret is False:
+        if exit_on_error:
+            sys.exit(1)
+        else:
+            return "", ""
+
+    if config.serviceable_only and not uh.isServiceable():
+        return "", ""
+
+    if config.non_serviceable_only and uh.isServiceable():
+        return "", ""
+
+    section_jsons = []
+    for _ in range(2, ph.sectionCount):
+        sectionID, sectionLen, versionID, subType, componentID = parseHeader(
+            stream)
+        section_json = OrderedDict()
+        sectionFun(stream, section_json, sectionID, sectionLen,
+                   versionID, subType, componentID, ph.creatorID, config)
+        section_jsons.append(section_json)
+
+    buildOutput(section_jsons, out)
+
+    return eid, json.dumps(out, indent=4)
+
+
+def parseAndWriteOutput(file: str, output_dir: str, config: Config,
+                        delete_after_parsing: bool) -> None:
+
+    with open(file, 'rb') as fd:
+        data = fd.read()
+        stream = DataStream(data, byte_order='big', is_signed=False)
+
+        try:
+            eid, json_string = parsePEL(stream, config, False)
+
+            if len(json_string) != 0:
+                output_file = os.path.join(
+                    output_dir, os.path.basename(file) + '.' + eid + '.json')
+
+                with open(output_file, "w") as output:
+                    output.writelines(json_string)
+
+                    if delete_after_parsing:
+                        os.remove(file)
+            else:
+                print(f"No PEL parsed for {file}")
+        except Exception as e:
+            print(f"No PEL parsed for {file}: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="PELTools")
 
@@ -193,6 +260,15 @@ def main():
                         help='Path to JSON config file')
     parser.add_argument('-p', '--no-plugins', dest='skip_plugins',
                         action='store_true', help='Skip loading plugins')
+    parser.add_argument('-d', '--directory', dest='directory',
+                        help='Process all files in a directory and save as <filename>.json.'
+                        ' Use -o to specify output directory')
+    parser.add_argument('-o', '--output-dir', dest='output_dir',
+                        help='Directory to write output files when processing a directory')
+    parser.add_argument('-e', '--extension', dest='extension',
+                        help='Used with -d, only look for files with this extension (e.g. ".pel")')
+    parser.add_argument('-x', '--delete', dest='delete', action='store_true',
+                        help='Delete original file after parsing')
     args = parser.parse_args()
 
     config = Config()
@@ -203,36 +279,50 @@ def main():
     if args.skip_plugins:
         config.allow_plugins = False
 
+    if args.serviceable:
+        config.serviceable_only = True
+
+    if args.non_serviceable:
+        config.non_serviceable_only = True
+
+    if args.directory:
+        if not os.path.isdir(args.directory):
+            sys.exit(f"{args.directory} is not a valid directory")
+
+        output_dir = args.directory
+        if args.output_dir:
+            if not os.path.isdir(args.output_dir):
+                sys.exit(f"Output directory {args.output_dir} doesn't exist")
+
+            output_dir = args.output_dir
+
+        for root, _, files in os.walk(args.directory):
+            for file in files:
+                parse_file = True
+                if args.extension:
+                    _, ext = os.path.splitext(file)
+                    if ext != args.extension:
+                        parse_file = False
+
+                if parse_file:
+                    parseAndWriteOutput(os.path.join(
+                        root, file), output_dir, config,
+                        args.delete)
+
+            # Only process top level directory
+            break
+
+        sys.exit(0)
+
     with open(args.file, 'rb') as fd:
         data = fd.read()
         stream = DataStream(data, byte_order='big', is_signed=False)
-        out = OrderedDict()
-        ret, ph = generatePH(stream, out)
-        if ret == False:
-            sys.exit(1)
 
-        ret, uh = generateUH(stream, ph.creatorID, out)
-        if ret == False:
-            sys.exit(1)
+        _, json_string = parsePEL(stream, config, True)
+        print(json_string)
 
-        if args.serviceable and not uh.isServiceable():
-            sys.exit(0)
-
-        if args.non_serviceable and uh.isServiceable():
-            sys.exit(0)
-
-        section_jsons = []
-        for _ in range(2, ph.sectionCount):
-            sectionID, sectionLen, versionID, subType, componentID = parserHeader(
-                stream)
-            section_json = {}
-            sectionFun(stream, section_json, sectionID, sectionLen,
-                       versionID, subType, componentID, ph.creatorID, config)
-            section_jsons.append(section_json)
-
-        buildOutput(section_jsons, out)
-
-        print(json.dumps(out, indent=4))
+        if args.delete:
+            os.remove(args.file)
 
 
 if __name__ == '__main__':
