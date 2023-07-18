@@ -25,7 +25,7 @@ def getSectionName(sectionID: int) -> str:
     return sectionNames.get(id, 'Unknown')
 
 
-def parserHeader(stream: DataStream):
+def parseHeader(stream: DataStream):
     sectionID = stream.get_int(2)
     sectionLen = stream.get_int(2)
     versionID = stream.get_int(1)
@@ -35,10 +35,10 @@ def parserHeader(stream: DataStream):
 
 
 def generatePH(stream: DataStream, out: OrderedDict) -> (bool, PrivateHeader):
-    sectionID, sectionLen, versionID, subType, componentID = parserHeader(
+    sectionID, sectionLen, versionID, subType, componentID = parseHeader(
         stream)
     if sectionID != SectionID.privateHeader.value:
-        print("Failed to parser Private Header, section ID = %x" % (sectionID))
+        print("Failed to parse Private Header, section ID = %x" % (sectionID))
         return False, None
 
     ph = PrivateHeader(stream, sectionID, sectionLen,
@@ -48,10 +48,10 @@ def generatePH(stream: DataStream, out: OrderedDict) -> (bool, PrivateHeader):
 
 
 def generateUH(stream: DataStream, creatorID: str, out: OrderedDict) -> (bool, UserHeader):
-    sectionID, sectionLen, versionID, subType, componentID = parserHeader(
+    sectionID, sectionLen, versionID, subType, componentID = parseHeader(
         stream)
     if sectionID != SectionID.userHeader.value:
-        print("Failed to parser User Header, section ID = %d" % (sectionID))
+        print("Failed to parse User Header, section ID = %d" % (sectionID))
         return False, None
 
     uh = UserHeader(stream, sectionID, sectionLen,
