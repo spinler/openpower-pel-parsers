@@ -6,6 +6,7 @@ from pel.peltool.registry import Registry
 from pel.peltool.pel_values import failingComponentType, \
     calloutPriorityValues
 from pel.peltool.comp_id import getDisplayCompID
+from pel.peltool.config import Config
 import json
 import sys
 
@@ -236,7 +237,7 @@ class SRC:
         except:
             pass
 
-    def getCallouts(self, out: OrderedDict):
+    def getCallouts(self, out: OrderedDict, config: Config):
         od = OrderedDict()
         _ = self.stream.get_int(1)  # subsectionID
         _ = self.stream.get_int(1)  # subsectionFlags
@@ -263,7 +264,8 @@ class SRC:
                     json["Part Number"] = callout.fruIdentity.pnOrProcedureID
                 if callout.fruIdentity.flags & Flags.maintProcSupplied.value:
                     json["Procedure"] = callout.fruIdentity.pnOrProcedureID
-                    self.getProcedureDesc(json["Procedure"], json)
+                    if config.allow_plugins:
+                        self.getProcedureDesc(json["Procedure"], json)
                 if callout.fruIdentity.flags & Flags.ccinSupplied.value:
                     json["CCIN"] = callout.fruIdentity.ccin
                 if callout.fruIdentity.flags & Flags.snSupplied.value:
@@ -307,7 +309,7 @@ class SRC:
                 self.asciiString.rstrip(), str(e)), file=sys.stderr)
             return ''
 
-    def toJSON(self) -> OrderedDict:
+    def toJSON(self, config: Config) -> OrderedDict:
         self.version = "0x" + self.stream.get_mem(1).hex()
         self.flags = self.stream.get_int(1)
         self.reserved1B = self.stream.get_int(1)
@@ -358,10 +360,11 @@ class SRC:
             hexwords.append('00000000')
 
         if self.flags & HeaderFlags.additionalSections.value:
-            self.getCallouts(out)
+            self.getCallouts(out, config)
 
-        value = self.parse(hexwords)
-        if value != '' and value != 'null':
-            out["SRC Details"] = json.loads(value)
+        if config.allow_plugins:
+            value = self.parse(hexwords)
+            if value != '' and value != 'null':
+                out["SRC Details"] = json.loads(value)
 
         return out
