@@ -3,6 +3,7 @@ from collections import OrderedDict
 import json
 from pel.peltool.parse_user_data import ParseUserData
 from pel.peltool.comp_id import getDisplayCompID
+from pel.peltool.config import Config
 
 
 class UserData:
@@ -25,7 +26,7 @@ class UserData:
         self.dataLength = sectionLen - 8
         self.data = self.stream.get_mem(self.dataLength)
 
-    def toJSON(self) -> OrderedDict:
+    def toJSON(self, config: Config) -> OrderedDict:
 
         out = OrderedDict()
         out["Section Version"] = self.versionID
@@ -35,7 +36,7 @@ class UserData:
         parser = ParseUserData(self.creatorID, self.componentID, self.subType,
                                self.versionID, self.data)
 
-        value = parser.parse()
+        value = parser.parse(config)
 
         j = json.loads(value)
         if not isinstance(j, dict):
