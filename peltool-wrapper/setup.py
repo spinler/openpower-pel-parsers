@@ -16,6 +16,7 @@ setup(
         f"Hostboot >= {version}",
         f"sbe-pel-parser >= {version}",
         f"pel-message-registry >= {version}",
-        f"openpower-hw-diags-pel-parser-data >= {version}"
+        f"openpower-hw-diags-pel-parser-data >= {version}",
+        f"occ-pel-parser >= {version}"
         ]
 )
